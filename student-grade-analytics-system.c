@@ -1,78 +1,114 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #include <stdlib.h>
-#define SIZE 15
+#include <stddef.h>
+
+#define STUDENT_COUNT 15
+#define GRADE_MIN 0
+#define GRADE_MAX 100
+#define PASS_THRESHOLD 50
 
 // function prototypes
-void inputGrades(int grades[]);
-void analysisGrades(int grades[]); 
-void statusGrades(int grades[]);
-void extremesGrades(int grades[]);
+static void discardLine(void);
+void inputGrades(int grades[], size_t count);
+void analysisGrades(const int grades[], size_t count);
+void statusGrades(const int grades[], size_t count);
+void extremesGrades(const int grades[], size_t count);
 
 
 int main() {
-    int grades[SIZE];
+    int grades[STUDENT_COUNT];
 
-    inputGrades(grades); // get input
-    analysisGrades(grades); // calculate average
-    statusGrades(grades); // count pass/fail
-    extremesGrades(grades); // find the highest grade
+    inputGrades(grades, STUDENT_COUNT); // get input
+    analysisGrades(grades, STUDENT_COUNT); // calculate average
+    statusGrades(grades, STUDENT_COUNT); // count pass/fail
+    extremesGrades(grades, STUDENT_COUNT); // find the highest grade
 
     return 0;
 }
 
-void inputGrades(int grades[]) {
+void inputGrades(int grades[], size_t count) {
     int scanResult;
 
-	for (int i = 0; i < SIZE; i++) {
+    for (size_t i = 0; i < count; i++) {
         do {
-            printf("enter a grade for student %d: ", i + 1);
+            printf("enter a grade for student %zu: ", i + 1);
             scanResult = scanf("%d", &grades[i]);
 
-            if (scanResult == 0) {
-                printf("error: invalid input! please enter a number, not letters.");
-
-                while (getchar() != '\n');
+            if (scanResult == EOF) {
+                printf("\nerror: no input detected, exiting.\n");
+                exit(EXIT_FAILURE);
+            } else if (scanResult == 0) {
+                printf("error: invalid input! please enter a number, not letters.\n");
+                discardLine();
+                continue;
+            } else if (grades[i] < GRADE_MIN || grades[i] > GRADE_MAX) {
+                printf("error: grade must be between %d and %d.\n", GRADE_MIN, GRADE_MAX);
+                discardLine();
+                continue;
             }
-
-            else if (grades[i] < 0 || grades[i] > 100) {
-                printf("error: grade must be between 0 and 100.\n");
-            }
-
-        } while (scanResult == 0 || grades[i] < 0 || grades[i] > 100);
+            discardLine();
+            break;
+        } while (1);
     }
 }
 
-void analysisGrades(int grades[]) {
-    int total = 0; float average = 0;
+void analysisGrades(const int grades[], size_t count) {
+    double total = 0.0;
+    double average = 0.0;
 
-    for (int i = 0; i < SIZE; i++) {
+    if (count == 0) {
+        printf("no grades to analyze.\n");
+        return;
+    }
+
+    for (size_t i = 0; i < count; i++) {
         total += grades[i];
     }
-    average = total / SIZE;
+    average = total / (double)count;
 
     printf("class average: %.2f\n", average);
 }
 
-void statusGrades(int grades[]) {
-    int i = 0, count = 0;
-    for (int i = 0; i < SIZE; i++) {
-        if (grades[i] <= 50) {
-            count++;
+void statusGrades(const int grades[], size_t count) {
+    size_t passed = 0;
+
+    if (count == 0) {
+        printf("no grades to evaluate pass/fail status.\n");
+        return;
+    }
+
+    for (size_t i = 0; i < count; i++) {
+        if (grades[i] >= PASS_THRESHOLD) {
+            passed++;
         }
     }
-    printf("%d student(s) passed and %d student(s) failed.\n", count, SIZE - count);
+    printf("%zu student(s) passed and %zu student(s) failed.\n", passed, count - passed);
 }
 
-void extremesGrades(int grades[]) {
-    int maxGrade = grades[0];
-    int maxStudentIndex = 0;
+void extremesGrades(const int grades[], size_t count) {
+    int maxGrade;
+    size_t maxStudentIndex = 0;
 
-    for (int i = 1; i < SIZE; i++) {
+    if (count == 0) {
+        printf("no grades to determine highest value.\n");
+        return;
+    }
+
+    maxGrade = grades[0];
+
+    for (size_t i = 1; i < count; i++) {
         if (grades[i] > maxGrade) {
             maxGrade = grades[i];
             maxStudentIndex = i;
         }
     }
- printf("highest grade (student: %d): %d", maxStudentIndex+1, maxGrade);
+    printf("highest grade (student: %zu): %d\n", maxStudentIndex + 1, maxGrade);
+}
+
+static void discardLine(void) {
+    int ch;
+    while ((ch = getchar()) != '\n' && ch != EOF) {
+        // discard until end of line
+    }
 }
